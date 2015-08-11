@@ -2,6 +2,8 @@ package com.example.calin.speedcuber;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -12,33 +14,57 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView clockTextView, countDownTextView;
+    TextView clockTextView, countDownTextView, firstPlace, firstPlaceName,
+            secondPlace, secondPlaceName, thirdPlace, thirdPlaceName;
     RelativeLayout mainLayout;
     boolean running, countingDown;
     int inspectionTime;
-    String cubeType;
+    String cubeType, highScores[], highScoreNames[], playerName;
+
+    final static String ZERO_TIME = "00:00:00";
+    final static int DEFAULT_INSPECTION_TIME = 2;
+
+    final static String INSPECTION_KEY = "InspectionTime";
+    final static String CUBE_TYPE_KEY = "CubeType";
+    final static String PLAYER_NAME_KEY = "PlayerName";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SharedPreferences preferences = this.getSharedPreferences("myPrefs", Context.MODE_PRIVATE);
-
-        inspectionTime = preferences.getInt("InspectionTime", 0);
-        cubeType = preferences.getString("CubeType", "3x3");
 
         clockTextView = (TextView) findViewById(R.id.clock_text_view);
-        clockTextView.setText("00:00:00");
+        clockTextView.setText(ZERO_TIME);
 
         countDownTextView = (TextView) findViewById(R.id.count_down_text_view);
-
         mainLayout = (RelativeLayout) findViewById(R.id.main_layout);
+        firstPlace = (TextView) findViewById(R.id.first_place_time);
+        firstPlaceName = (TextView) findViewById(R.id.first_player_name);
+        secondPlace = (TextView) findViewById(R.id.second_place_time);
+        secondPlaceName = (TextView) findViewById(R.id.second_player_name);
+        thirdPlace = (TextView) findViewById(R.id.third_place_time);
+        thirdPlaceName = (TextView) findViewById(R.id.third_player_name);
 
         running = countingDown = false;
+
+        getPreferenceValues();
+        fillHighScoreTable();
+    }
+
+    @Override
+    protected void onPause() {
+
+        //if setting set, keep timer going other wise stop it
+        updatePreferences();
+        super.onPause();
     }
 
     @Override
@@ -63,11 +89,62 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void updatePreferences() {
+
+        SharedPreferences prefs = this.getSharedPreferences("settingsPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.putInt(INSPECTION_KEY, inspectionTime);
+        editor.putString(CUBE_TYPE_KEY, cubeType);
+        editor.putString(PLAYER_NAME_KEY, playerName);
+        editor.putStringSet(cubeType + "Scores", new HashSet<String>(Arrays.asList(highScores)));
+        editor.putStringSet(cubeType + "Names", new HashSet<String>(Arrays.asList(highScoreNames)));
+
+        editor.commit();
+
+    }
+
+    private void fillHighScoreTable() {
+
+        if (highScores[0] != null) {
+            firstPlace.setText(highScores[0]);
+            firstPlaceName.setText(highScoreNames[0]);
+        }
+        if (highScores[1] != null) {
+            secondPlace.setText(highScores[1]);
+            secondPlaceName.setText(highScoreNames[1]);
+        }
+        if (highScores[2] != null) {
+            thirdPlace.setText(highScores[2]);
+            thirdPlaceName.setText(highScoreNames[2]);
+        }
+    }
+
+    public void getPreferenceValues() {
+        SharedPreferences prefs = this.getSharedPreferences("settingsPrefs", Context.MODE_PRIVATE);
+
+        inspectionTime = prefs.getInt(INSPECTION_KEY, DEFAULT_INSPECTION_TIME);
+        cubeType = prefs.getString(CUBE_TYPE_KEY, "3x3");
+        playerName = prefs.getString(PLAYER_NAME_KEY, "PLAYER 1");
+        highScores = prefs.getStringSet(cubeType + "Scores",
+                new HashSet<String>()).toArray(new String[3]);
+        highScoreNames = prefs.getStringSet(cubeType + "Names",
+                new HashSet<String>()).toArray(new String[3]);
+    }
+
     public void ScreenHit(View view) {
 
         if (!running) {
 
             running = true;
+
+            int orientation = getResources().getConfiguration().orientation;
+
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            } else {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }
 
             if (inspectionTime > 0) {
                 startCountDown();
@@ -82,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (running){
 
             running = false;
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
 
         }
 

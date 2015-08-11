@@ -14,7 +14,8 @@
         android:gravity="center"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
+        android:layout_marginTop="150dp"
+        android:background="@drawable/border"
         />
 
     <TextView
@@ -27,5 +28,92 @@
         android:gravity="center"
         android:visibility="gone"/>
 
+    <TableLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:layout_below="@+id/clock_text_view"
+        android:layout_centerHorizontal="true"
+        android:onClick="ScreenHit">
+
+        <TableRow
+            android:gravity="center">
+            <TextView
+                android:id="@+id/table_title_text_view"
+                android:text="High Scores"
+                android:textSize="30sp"
+                android:gravity="center"
+                android:textStyle="bold"/>
+        </TableRow>
+
+        <TableRow
+            android:gravity="center">
+            <TableLayout
+                android:id="@+id/high_score_table"
+                android:layout_width="240dp"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="5dp">
+
+                <TableRow>
+                    <TextView
+                        android:text="1st"
+                        android:layout_width="80dp"
+                        android:layout_column="1"
+                        android:textSize="20sp"/>
+                    <TextView
+                        android:id="@+id/first_player_name"
+                        android:layout_width="80dp"
+                        android:layout_column="2"
+                        android:gravity="center"
+                        android:textSize="20sp"/>
+                    <TextView
+                        android:id="@+id/first_place_time"
+                        android:layout_width="80dp"
+                        android:layout_column="3"
+                        android:gravity="right"
+                        android:textSize="20sp"/>
+                </TableRow>
+
+                <TableRow
+                    android:gravity="center">
+                    <TextView
+                        android:text="2nd"
+                        android:layout_width="80dp"
+                        android:layout_column="1"
+                        android:textSize="20sp"/>
+                    <TextView
+                        android:id="@+id/second_player_name"
+                        android:layout_width="80dp"
+                        android:layout_column="2"
+                        android:textSize="20sp"/>
+                    <TextView
+                        android:id="@+id/second_place_time"
+                        android:layout_width="80dp"
+                        android:textSize="20sp"
+                        android:layout_column="3"/>
+                </TableRow>
+
+                <TableRow
+                    android:gravity="center">
+                    <TextView
+                        android:text="3rd"
+                        android:layout_width="80dp"
+                        android:layout_column="1"
+                        android:textSize="20sp"/>
+                    <TextView
+                        android:id="@+id/third_player_name"
+                        android:layout_width="80dp"
+                        android:layout_column="2"
+                        android:textSize="20sp"/>
+                    <TextView
+                        android:id="@+id/third_place_time"
+                        android:layout_width="80dp"
+                        android:layout_column="3"
+                        android:textSize="20sp"/>
+                </TableRow>
+            </TableLayout>
+        </TableRow>
+    </TableLayout>
 
 </RelativeLayout>
