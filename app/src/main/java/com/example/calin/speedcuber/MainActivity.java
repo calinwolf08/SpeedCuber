@@ -1,5 +1,6 @@
 package com.example.calin.speedcuber;
 
+import android.app.DialogFragment;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -12,24 +13,26 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.TableLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SettingsDialog.Communicator{
 
     TextView clockTextView, countDownTextView, firstPlace, firstPlaceName,
-            secondPlace, secondPlaceName, thirdPlace, thirdPlaceName;
-    RelativeLayout mainLayout;
+            secondPlace, secondPlaceName, thirdPlace, thirdPlaceName, tableTitle;
+    TableLayout highscoreTable;
     boolean running, countingDown;
     int inspectionTime;
     String cubeType, highScores[], highScoreNames[], playerName;
 
     final static String ZERO_TIME = "00:00:00";
-    final static int DEFAULT_INSPECTION_TIME = 2;
+    final static int DEFAULT_INSPECTION_TIME = 5;
 
     final static String INSPECTION_KEY = "InspectionTime";
     final static String CUBE_TYPE_KEY = "CubeType";
@@ -44,14 +47,15 @@ public class MainActivity extends AppCompatActivity {
         clockTextView = (TextView) findViewById(R.id.clock_text_view);
         clockTextView.setText(ZERO_TIME);
 
+        highscoreTable = (TableLayout) findViewById(R.id.high_score_table);
         countDownTextView = (TextView) findViewById(R.id.count_down_text_view);
-        mainLayout = (RelativeLayout) findViewById(R.id.main_layout);
         firstPlace = (TextView) findViewById(R.id.first_place_time);
         firstPlaceName = (TextView) findViewById(R.id.first_player_name);
         secondPlace = (TextView) findViewById(R.id.second_place_time);
         secondPlaceName = (TextView) findViewById(R.id.second_player_name);
         thirdPlace = (TextView) findViewById(R.id.third_place_time);
         thirdPlaceName = (TextView) findViewById(R.id.third_player_name);
+        tableTitle = (TextView) findViewById(R.id.table_title_text_view);
 
         running = countingDown = false;
 
@@ -83,6 +87,11 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+
+            DialogFragment settingsDialog = new SettingsDialog();
+
+            settingsDialog.show(getFragmentManager(), "settingsDialog"); //tag
+
             return true;
         }
 
@@ -105,6 +114,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fillHighScoreTable() {
+
+        tableTitle.setText("High Score's for " + cubeType);
 
         if (highScores[0] != null) {
             firstPlace.setText(highScores[0]);
@@ -168,6 +179,8 @@ public class MainActivity extends AppCompatActivity {
     private void startCountDown() {
 
         clockTextView.setVisibility(View.INVISIBLE);
+        highscoreTable.setVisibility(View.INVISIBLE);
+        tableTitle.setVisibility(View.INVISIBLE);
         countDownTextView.setVisibility(View.VISIBLE);
         countingDown = true;
 
@@ -206,6 +219,8 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         countDownTextView.setVisibility(View.GONE);
                         clockTextView.setVisibility(View.VISIBLE);
+                        highscoreTable.setVisibility(View.VISIBLE);
+                        tableTitle.setVisibility(View.VISIBLE);
                         startStopWatch();
                     }
                 });
@@ -236,12 +251,12 @@ public class MainActivity extends AppCompatActivity {
                             updateTime(curTime);
                         }
                     });
-                }
 
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
@@ -260,5 +275,39 @@ public class MainActivity extends AppCompatActivity {
         }
 
         clockTextView.setText(vals[0] + ":" + vals[1] + ":" + vals[2]);
+    }
+
+    @Override
+    public void dialogMessage(int buttonClicked,
+                              String playerName, String cubeType, String inspectionTime) {
+
+        if(buttonClicked == 1) {
+
+            if (playerName != null && !playerName.equals("")) {
+                this.playerName = playerName;
+                //Toast.makeText(this, "Welcome " + playerName, Toast.LENGTH_SHORT).show();
+            }
+            if (cubeType != null && !cubeType.equals("")) {
+                this.cubeType = cubeType;
+                //Toast.makeText(this, "New Cube Type is " + inspectionTime, Toast.LENGTH_SHORT).show();
+            }
+            if (inspectionTime != null && !inspectionTime.equals("")) {
+                this.inspectionTime = Integer.parseInt(inspectionTime.split(" ")[0]);
+                //Toast.makeText(this, "New Inspection Time is " + inspectionTime + " seconds",
+                        //Toast.LENGTH_SHORT).show();
+            }
+
+            //Toast.makeText(this, this.inspectionTime + " seconds : " + this.cubeType + " : " + this.playerName,
+                    //Toast.LENGTH_SHORT).show();
+
+
+            updatePreferences();
+            getPreferenceValues();
+            fillHighScoreTable();
+
+            Toast.makeText(this, "New Settings Applied", Toast.LENGTH_SHORT).show();
+
+        }
+
     }
 }

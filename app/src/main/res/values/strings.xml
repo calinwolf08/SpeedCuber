@@ -3,4 +3,28 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+
+    <string-array name="cubeTypes">
+        <item></item>
+        <item>2x2</item>
+        <item>3x3</item>
+        <item>4x4</item>
+        <item>5x5</item>
+        <item>6x6</item>
+        <item>7x7</item>
+        <item>MegaMinx</item>
+        <item>Square-1</item>
+        <item>Pyraminx</item>
+    </string-array>
+
+    <string-array name="inspectionTimes">
+        <item></item>
+        <item>0 seconds</item>
+        <item>5 seconds</item>
+        <item>10 seconds</item>
+        <item>15 seconds</item>
+        <item>30 seconds</item>
+        <item>60 seconds</item>
+    </string-array>
+
 </resources>
