@@ -26,14 +26,12 @@
         android:gravity="center"
         android:visibility="gone"/>
 
-
     <TextView
         android:id="@+id/table_title_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="25sp"
         android:layout_centerHorizontal="true"
-        android:text="High Score's for 3x3"
         android:layout_below="@+id/clock_text_view"
         android:textStyle="bold"/>
 
@@ -48,7 +46,7 @@
         <TableRow
             android:gravity="center">
             <TableLayout
-                android:layout_width="240dp"
+                android:layout_width="260dp"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="5dp">
@@ -56,59 +54,69 @@
                 <TableRow>
                     <TextView
                         android:text="1st"
-                        android:layout_width="80dp"
+                        android:layout_width="60dp"
                         android:layout_column="1"
                         android:textSize="20sp"/>
                     <TextView
                         android:id="@+id/first_player_name"
-                        android:layout_width="80dp"
+                        android:layout_width="100dp"
                         android:layout_column="2"
-                        android:gravity="center"
-                        android:textSize="20sp"/>
+                        android:gravity="left"
+                        android:textSize="20sp"
+                        android:typeface="monospace"/>
                     <TextView
                         android:id="@+id/first_place_time"
-                        android:layout_width="80dp"
+                        android:layout_width="100dp"
                         android:layout_column="3"
                         android:gravity="right"
-                        android:textSize="20sp"/>
+                        android:textSize="20sp"
+                        android:typeface="monospace"/>
                 </TableRow>
 
                 <TableRow
                     android:gravity="center">
                     <TextView
                         android:text="2nd"
-                        android:layout_width="80dp"
+                        android:layout_width="60dp"
                         android:layout_column="1"
                         android:textSize="20sp"/>
                     <TextView
                         android:id="@+id/second_player_name"
-                        android:layout_width="80dp"
+                        android:layout_width="100dp"
                         android:layout_column="2"
-                        android:textSize="20sp"/>
+                        android:gravity="left"
+                        android:textSize="20sp"
+                        android:typeface="monospace"/>
                     <TextView
                         android:id="@+id/second_place_time"
-                        android:layout_width="80dp"
+                        android:layout_width="100dp"
                         android:textSize="20sp"
-                        android:layout_column="3"/>
+                        android:layout_column="3"
+                        android:gravity="right"
+                        android:typeface="monospace"/>
                 </TableRow>
 
                 <TableRow
                     android:gravity="center">
                     <TextView
                         android:text="3rd"
-                        android:layout_width="80dp"
+                        android:layout_width="60dp"
                         android:layout_column="1"
                         android:textSize="20sp"/>
                     <TextView
                         android:id="@+id/third_player_name"
-                        android:layout_width="80dp"
+                        android:layout_width="100dp"
                         android:layout_column="2"
-                        android:textSize="20sp"/>
+                        android:gravity="left"
+                        android:textSize="20sp"
+                        android:typeface="monospace"/>
                     <TextView
                         android:id="@+id/third_place_time"
-                        android:layout_width="80dp"
+                        android:layout_width="100dp"
                         android:layout_column="3"
-                        android:textSize="20sp"/>
+                        android:gravity="right"
+                        android:textSize="20sp"
+                        android:typeface="monospace"/>
                 </TableRow>
             </TableLayout>
         </TableRow>

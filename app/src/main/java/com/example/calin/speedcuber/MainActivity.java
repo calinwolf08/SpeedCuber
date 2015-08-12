@@ -1,5 +1,6 @@
 package com.example.calin.speedcuber;
 
+import android.app.AlertDialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -22,12 +23,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-public class MainActivity extends AppCompatActivity implements SettingsDialog.Communicator{
+public class MainActivity extends AppCompatActivity implements SettingsDialog.SettingsCommunicator,
+        UpdateScoreDialog.AlertCommunicator{
 
     TextView clockTextView, countDownTextView, firstPlace, firstPlaceName,
             secondPlace, secondPlaceName, thirdPlace, thirdPlaceName, tableTitle;
-    TableLayout highscoreTable;
+
+    TableLayout highScoreTable;
+
     boolean running, countingDown;
+    int index;
+
     int inspectionTime;
     String cubeType, highScores[], highScoreNames[], playerName;
 
@@ -47,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Co
         clockTextView = (TextView) findViewById(R.id.clock_text_view);
         clockTextView.setText(ZERO_TIME);
 
-        highscoreTable = (TableLayout) findViewById(R.id.high_score_table);
+        highScoreTable = (TableLayout) findViewById(R.id.high_score_table);
         countDownTextView = (TextView) findViewById(R.id.count_down_text_view);
         firstPlace = (TextView) findViewById(R.id.first_place_time);
         firstPlaceName = (TextView) findViewById(R.id.first_player_name);
@@ -88,6 +94,12 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Co
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
 
+            if (running) {
+
+                running = false;
+
+            }
+
             DialogFragment settingsDialog = new SettingsDialog();
 
             settingsDialog.show(getFragmentManager(), "settingsDialog"); //tag
@@ -96,51 +108,6 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Co
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private void updatePreferences() {
-
-        SharedPreferences prefs = this.getSharedPreferences("settingsPrefs", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-
-        editor.putInt(INSPECTION_KEY, inspectionTime);
-        editor.putString(CUBE_TYPE_KEY, cubeType);
-        editor.putString(PLAYER_NAME_KEY, playerName);
-        editor.putStringSet(cubeType + "Scores", new HashSet<String>(Arrays.asList(highScores)));
-        editor.putStringSet(cubeType + "Names", new HashSet<String>(Arrays.asList(highScoreNames)));
-
-        editor.commit();
-
-    }
-
-    private void fillHighScoreTable() {
-
-        tableTitle.setText("High Score's for " + cubeType);
-
-        if (highScores[0] != null) {
-            firstPlace.setText(highScores[0]);
-            firstPlaceName.setText(highScoreNames[0]);
-        }
-        if (highScores[1] != null) {
-            secondPlace.setText(highScores[1]);
-            secondPlaceName.setText(highScoreNames[1]);
-        }
-        if (highScores[2] != null) {
-            thirdPlace.setText(highScores[2]);
-            thirdPlaceName.setText(highScoreNames[2]);
-        }
-    }
-
-    public void getPreferenceValues() {
-        SharedPreferences prefs = this.getSharedPreferences("settingsPrefs", Context.MODE_PRIVATE);
-
-        inspectionTime = prefs.getInt(INSPECTION_KEY, DEFAULT_INSPECTION_TIME);
-        cubeType = prefs.getString(CUBE_TYPE_KEY, "3x3");
-        playerName = prefs.getString(PLAYER_NAME_KEY, "PLAYER 1");
-        highScores = prefs.getStringSet(cubeType + "Scores",
-                new HashSet<String>()).toArray(new String[3]);
-        highScoreNames = prefs.getStringSet(cubeType + "Names",
-                new HashSet<String>()).toArray(new String[3]);
     }
 
     public void ScreenHit(View view) {
@@ -179,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Co
     private void startCountDown() {
 
         clockTextView.setVisibility(View.INVISIBLE);
-        highscoreTable.setVisibility(View.INVISIBLE);
+        highScoreTable.setVisibility(View.INVISIBLE);
         tableTitle.setVisibility(View.INVISIBLE);
         countDownTextView.setVisibility(View.VISIBLE);
         countingDown = true;
@@ -219,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Co
                     public void run() {
                         countDownTextView.setVisibility(View.GONE);
                         clockTextView.setVisibility(View.VISIBLE);
-                        highscoreTable.setVisibility(View.VISIBLE);
+                        highScoreTable.setVisibility(View.VISIBLE);
                         tableTitle.setVisibility(View.VISIBLE);
                         startStopWatch();
                     }
@@ -258,6 +225,15 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Co
                         e.printStackTrace();
                     }
                 }
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        checkHighScores();
+                    }
+                });
+
             }
 
         }.start();
@@ -277,32 +253,121 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Co
         clockTextView.setText(vals[0] + ":" + vals[1] + ":" + vals[2]);
     }
 
+    private void updatePreferences() {
+
+        SharedPreferences prefs = this.getSharedPreferences("settingsPrefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.putInt(INSPECTION_KEY, inspectionTime);
+        editor.putString(CUBE_TYPE_KEY, cubeType);
+        editor.putString(PLAYER_NAME_KEY, playerName);
+        editor.putStringSet(cubeType + "Scores", new HashSet<>(Arrays.asList(highScores)));
+        editor.putStringSet(cubeType + "Names", new HashSet<>(Arrays.asList(highScoreNames)));
+
+        editor.commit();
+
+    }
+
+    public void getPreferenceValues() {
+        SharedPreferences prefs = this.getSharedPreferences("settingsPrefs", Context.MODE_PRIVATE);
+
+        inspectionTime = prefs.getInt(INSPECTION_KEY, DEFAULT_INSPECTION_TIME);
+        cubeType = prefs.getString(CUBE_TYPE_KEY, "3x3");
+        playerName = prefs.getString(PLAYER_NAME_KEY, "PLAYER 1");
+
+        highScores = prefs.getStringSet(cubeType + "Scores",
+                new HashSet<String>()).toArray(new String[3]);
+        highScoreNames = prefs.getStringSet(cubeType + "Names",
+                new HashSet<String>()).toArray(new String[3]);
+    }
+
+    public void getHighScorePreferenceValues() {
+
+        SharedPreferences prefs = this.getSharedPreferences("settingsPrefs", Context.MODE_PRIVATE);
+
+        highScores = prefs.getStringSet(cubeType + "Scores",
+                new HashSet<String>()).toArray(new String[3]);
+        highScoreNames = prefs.getStringSet(cubeType + "Names",
+                new HashSet<String>()).toArray(new String[3]);
+    }
+
+    private void fillHighScoreTable() {
+
+        tableTitle.setText("High Score's for " + cubeType);
+
+        //if (highScores[0] != null) {
+            firstPlace.setText(highScores[0]);
+            firstPlaceName.setText(highScoreNames[0]);
+        //}
+        //if (highScores[1] != null) {
+            secondPlace.setText(highScores[1]);
+            secondPlaceName.setText(highScoreNames[1]);
+        //}
+        //if (highScores[2] != null) {
+            thirdPlace.setText(highScores[2]);
+            thirdPlaceName.setText(highScoreNames[2]);
+        //}
+    }
+
+    public void checkHighScores() {
+        String cur = clockTextView.getText().toString(), curName = playerName;
+
+
+        for(int i = 0; i < 3; i++) {
+            //if high score could go here open alert dialog to ask permission to replace
+            if(highScores[i] == null || cur.compareTo(highScores[i]) < 0) {
+                index = i;
+                askPlayerToSaveScore();
+                return;
+            }
+        }
+
+    }
+
+    private void askPlayerToSaveScore() {
+        DialogFragment updateDialog = new UpdateScoreDialog();
+
+        updateDialog.show(getFragmentManager(), "updateDialog"); //tag
+    }
+
+    private void updateHighScores() {
+
+        String cur = clockTextView.getText().toString(), curName = playerName, temp, tempName;
+        boolean moveDown = false;
+
+        //fill in current score and move the rest down
+        for(int i = index; i < 3; i++) {
+            temp = highScores[i];
+            tempName = highScoreNames[i];
+            highScores[i] = cur;
+            highScoreNames[i] = curName;
+            cur = temp;
+            curName = tempName;
+        }
+
+        fillHighScoreTable();
+
+    }
+
     @Override
     public void dialogMessage(int buttonClicked,
                               String playerName, String cubeType, String inspectionTime) {
 
         if(buttonClicked == 1) {
 
+            updatePreferences();
+
             if (playerName != null && !playerName.equals("")) {
                 this.playerName = playerName;
-                //Toast.makeText(this, "Welcome " + playerName, Toast.LENGTH_SHORT).show();
             }
             if (cubeType != null && !cubeType.equals("")) {
                 this.cubeType = cubeType;
-                //Toast.makeText(this, "New Cube Type is " + inspectionTime, Toast.LENGTH_SHORT).show();
             }
             if (inspectionTime != null && !inspectionTime.equals("")) {
                 this.inspectionTime = Integer.parseInt(inspectionTime.split(" ")[0]);
-                //Toast.makeText(this, "New Inspection Time is " + inspectionTime + " seconds",
-                        //Toast.LENGTH_SHORT).show();
             }
 
-            //Toast.makeText(this, this.inspectionTime + " seconds : " + this.cubeType + " : " + this.playerName,
-                    //Toast.LENGTH_SHORT).show();
-
-
-            updatePreferences();
-            getPreferenceValues();
+            getHighScorePreferenceValues();
             fillHighScoreTable();
 
             Toast.makeText(this, "New Settings Applied", Toast.LENGTH_SHORT).show();
@@ -310,4 +375,12 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Co
         }
 
     }
+
+    @Override
+    public void alertAnswer(boolean response) {
+        if (response) {
+            updateHighScores();
+        }
+    }
+
 }
