@@ -18,13 +18,19 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Scanner;
 import java.util.Set;
 
 
 public class MainActivity extends AppCompatActivity implements SettingsDialog.SettingsCommunicator,
-        UpdateScoreDialog.AlertCommunicator{
+        UpdateScoreDialog.AlertCommunicator, DeleteScoresDialog.DeleteCommunicator{
 
     TextView clockTextView, countDownTextView, firstPlace, firstPlaceName,
             secondPlace, secondPlaceName, thirdPlace, thirdPlaceName, tableTitle;
@@ -35,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Se
     int index;
 
     int inspectionTime;
-    String cubeType, highScores[], highScoreNames[], playerName;
+    String cubeType, highScores[][], playerName;
 
     final static String ZERO_TIME = "00:00:00";
     final static int DEFAULT_INSPECTION_TIME = 5;
@@ -43,6 +49,8 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Se
     final static String INSPECTION_KEY = "InspectionTime";
     final static String CUBE_TYPE_KEY = "CubeType";
     final static String PLAYER_NAME_KEY = "PlayerName";
+
+    final static String FILENAME = "HighScores";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Se
         running = countingDown = false;
 
         getPreferenceValues();
+        getHighScoreValues();
         fillHighScoreTable();
     }
 
@@ -74,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Se
 
         //if setting set, keep timer going other wise stop it
         updatePreferences();
+        saveHighScores();
         super.onPause();
     }
 
@@ -105,6 +115,19 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Se
             settingsDialog.show(getFragmentManager(), "settingsDialog"); //tag
 
             return true;
+        }
+
+        if (id == R.id.action_delete) {
+
+            if (running)
+                running = false;
+
+            DialogFragment deleteFragment = new DeleteScoresDialog();
+
+            deleteFragment.show(getFragmentManager(), "deleteDialog");
+
+            return true;
+
         }
 
         return super.onOptionsItemSelected(item);
@@ -261,8 +284,6 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Se
         editor.putInt(INSPECTION_KEY, inspectionTime);
         editor.putString(CUBE_TYPE_KEY, cubeType);
         editor.putString(PLAYER_NAME_KEY, playerName);
-        editor.putStringSet(cubeType + "Scores", new HashSet<>(Arrays.asList(highScores)));
-        editor.putStringSet(cubeType + "Names", new HashSet<>(Arrays.asList(highScoreNames)));
 
         editor.commit();
 
@@ -275,47 +296,93 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Se
         cubeType = prefs.getString(CUBE_TYPE_KEY, "3x3");
         playerName = prefs.getString(PLAYER_NAME_KEY, "PLAYER 1");
 
-        highScores = prefs.getStringSet(cubeType + "Scores",
-                new HashSet<String>()).toArray(new String[3]);
-        highScoreNames = prefs.getStringSet(cubeType + "Names",
-                new HashSet<String>()).toArray(new String[3]);
     }
 
-    public void getHighScorePreferenceValues() {
+    //get high score values from file
+    public void getHighScoreValues() {
 
-        SharedPreferences prefs = this.getSharedPreferences("settingsPrefs", Context.MODE_PRIVATE);
+        highScores = new String[3][2];
 
-        highScores = prefs.getStringSet(cubeType + "Scores",
-                new HashSet<String>()).toArray(new String[3]);
-        highScoreNames = prefs.getStringSet(cubeType + "Names",
-                new HashSet<String>()).toArray(new String[3]);
+        try {
+
+            Scanner scan = new Scanner(openFileInput(FILENAME + cubeType + ".txt"));
+            int index = 0;
+
+            while (scan.hasNext() && index < 3) {
+
+                highScores[index][0] = scan.next();
+                highScores[index++][1] = scan.next();
+
+            }
+
+            scan.close();
+
+        } catch (FileNotFoundException e) { //file not found so no high score set for this cube type
+            //empty strings will fill table instead
+            e.printStackTrace();
+        }
+
+    }
+    //save high score values into file
+    private void saveHighScores() { //save scores before new table is loaded
+
+        try {
+            PrintWriter writer = new PrintWriter(
+                    openFileOutput(FILENAME + cubeType + ".txt", MODE_PRIVATE));
+
+            for (int i = 0; i < 3; i++) {
+                writer.print(highScores[i][0] == null ? " " : highScores[i][0]);
+                writer.print(" ");
+                writer.print(highScores[i][1] == null ? " " : highScores[i][1]);
+                writer.print("\n");
+            }
+
+            writer.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void deleteHighScoreFiles() {
+
+        for (int i=0; i<9; i++) {
+
+            try {
+                PrintWriter writer = new PrintWriter(
+                        openFileOutput(FILENAME + getCubeType(i) + ".txt", MODE_PRIVATE));
+
+                writer.write("");
+                writer.close();
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+        }
+
     }
 
     private void fillHighScoreTable() {
 
         tableTitle.setText("High Score's for " + cubeType);
 
-        //if (highScores[0] != null) {
-            firstPlace.setText(highScores[0]);
-            firstPlaceName.setText(highScoreNames[0]);
-        //}
-        //if (highScores[1] != null) {
-            secondPlace.setText(highScores[1]);
-            secondPlaceName.setText(highScoreNames[1]);
-        //}
-        //if (highScores[2] != null) {
-            thirdPlace.setText(highScores[2]);
-            thirdPlaceName.setText(highScoreNames[2]);
-        //}
+        firstPlaceName.setText(highScores[0][0]);
+        firstPlace.setText(highScores[0][1]);
+
+        secondPlaceName.setText(highScores[1][0]);
+        secondPlace.setText(highScores[1][1]);
+
+        thirdPlaceName.setText(highScores[2][0]);
+        thirdPlace.setText(highScores[2][1]);
     }
 
     public void checkHighScores() {
         String cur = clockTextView.getText().toString(), curName = playerName;
 
-
         for(int i = 0; i < 3; i++) {
             //if high score could go here open alert dialog to ask permission to replace
-            if(highScores[i] == null || cur.compareTo(highScores[i]) < 0) {
+            if(highScores[i][1] == null || cur.compareTo(highScores[i][1]) < 0) {
                 index = i;
                 askPlayerToSaveScore();
                 return;
@@ -330,47 +397,103 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Se
         updateDialog.show(getFragmentManager(), "updateDialog"); //tag
     }
 
-    private void updateHighScores() {
+    private void updateHighScores() { //update high score table on screen
 
-        String cur = clockTextView.getText().toString(), curName = playerName, temp, tempName;
-        boolean moveDown = false;
+        String cur = playerName, cur2 = clockTextView.getText().toString(), temp, temp2;
 
-        //fill in current score and move the rest down
-        for(int i = index; i < 3; i++) {
-            temp = highScores[i];
-            tempName = highScoreNames[i];
-            highScores[i] = cur;
-            highScoreNames[i] = curName;
+        for(int i=index; i<3; i++) {
+
+            temp = highScores[i][0];
+            temp2 = highScores[i][1];
+
+            highScores[i][0] = cur;
+            highScores[i][1] = cur2;
+
             cur = temp;
-            curName = tempName;
+            cur2 = temp2;
+
         }
 
         fillHighScoreTable();
+    }
 
+    public String getCubeType(int index) {
+
+        String ret;
+
+        switch (index) {
+
+            case 0:
+                ret = "2x2";
+                break;
+            case 1:
+                ret = "3x3";
+                break;
+            case 2:
+                ret = "4x4";
+                break;
+            case 3:
+                ret = "5x5";
+                break;
+            case 4:
+                ret = "6x6";
+                break;
+            case 5:
+                ret = "7x7";
+                break;
+            case 6:
+                ret = "MegaMinx";
+                break;
+            case 7:
+                ret = "Square-1";
+                break;
+            case 8:
+                ret = "Pyraminx";
+                break;
+            default:
+                ret = "";
+        }
+
+        return ret;
     }
 
     @Override
-    public void dialogMessage(int buttonClicked,
-                              String playerName, String cubeType, String inspectionTime) {
+    public void dialogMessage(int buttonClicked, String playerName,
+                              String inspectionTime, int cubeType) {
+
+        boolean needToUpdate = false;
+        String temp;
 
         if(buttonClicked == 1) {
 
-            updatePreferences();
-
-            if (playerName != null && !playerName.equals("")) {
+            if (playerName != null && !playerName.equals("")
+                    && !playerName.equals(this.playerName)) {
+                needToUpdate = true;
                 this.playerName = playerName;
             }
-            if (cubeType != null && !cubeType.equals("")) {
-                this.cubeType = cubeType;
-            }
-            if (inspectionTime != null && !inspectionTime.equals("")) {
+            if (inspectionTime != null && !inspectionTime.equals("")
+                    && !inspectionTime.equals(this.inspectionTime)) {
+                needToUpdate = true;
                 this.inspectionTime = Integer.parseInt(inspectionTime.split(" ")[0]);
             }
+            if (cubeType >= 0) {
 
-            getHighScorePreferenceValues();
-            fillHighScoreTable();
+                temp = getCubeType(cubeType);
 
-            Toast.makeText(this, "New Settings Applied", Toast.LENGTH_SHORT).show();
+                if(!temp.equals(this.cubeType)) {
+                    needToUpdate = true;
+                    saveHighScores();
+                    this.cubeType = temp;
+                    getHighScoreValues();
+                    fillHighScoreTable();
+                }
+
+            }
+
+            if (needToUpdate) {
+                Toast.makeText(this, "New Settings Applied", Toast.LENGTH_SHORT).show();
+                updatePreferences();
+            }
 
         }
 
@@ -383,4 +506,14 @@ public class MainActivity extends AppCompatActivity implements SettingsDialog.Se
         }
     }
 
+    @Override
+    public void DeleteAnswer(boolean response) {
+
+        if (response) {
+            deleteHighScoreFiles();
+            getHighScoreValues();
+            fillHighScoreTable();
+        }
+
+    }
 }
